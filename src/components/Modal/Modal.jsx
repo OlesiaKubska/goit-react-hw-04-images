@@ -1,47 +1,46 @@
-import React, { Component } from 'react';
+import React, { useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
 import { ModalContainer, Overlay } from './Modal.styled';
 import { createPortal } from 'react-dom';
 
 const modalRoot = document.querySelector('#modal-root');
 
-class Modal extends Component {
-    componentDidMount() {
-        window.addEventListener('keydown', this.handleKeyDown);
-    }
+const Modal = ({ modalData, onClose }) => {
+    const { largeImageURL, alt } = modalData;
 
-    componentWillUnmount() {
-        window.removeEventListener('keydown', this.handleKeyDown);
-    }
+    useEffect(() => {
+        const handleKeyDown = e => {
+            if (e.code === 'Escape') {
+                onClose();
+            }
+        };
+    
+        const handleClickOutside = (event) => {
+            if (event.target === event.currentTarget) {
+                onClose();
+            }
+        };
 
-    handleKeyDown = e => {
-        if (e.code === 'Escape') { 
-            this.props.onClose();
-        }
-    };
-
-    handleClickOutside = (event) => {
-        if (event.target === event.currentTarget) {
-            this.props.onClose();
-        }
-    };
-
-    render() {
-        const { modalData } = this.props;
+        window.addEventListener('keydown', handleKeyDown);
+        document.addEventListener('mousedown', handleClickOutside);
         
-        const { largeImageURL, alt } = modalData;
+        return () => {
+            window.removeEventListener('keydown', handleKeyDown);
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, [onClose]);
 
-        return createPortal (
-            <Overlay onClick={this.handleClickOutside}>
-                <ModalContainer>
-                    <img src={largeImageURL} alt={alt} />
-                    
-                </ModalContainer>
-            </Overlay>,
-            modalRoot
-        );
-    }
-}
+    const modalContainerRef = useRef(null);
+    
+    return createPortal(
+        <Overlay>
+            <ModalContainer ref={modalContainerRef}>
+                <img src={largeImageURL} alt={alt} />
+            </ModalContainer>
+        </Overlay>,
+        modalRoot
+    );
+};
 
 Modal.propTypes = {
     modalData: PropTypes.shape({
