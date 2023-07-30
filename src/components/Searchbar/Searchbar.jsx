@@ -1,53 +1,43 @@
-import React, { Component } from 'react';
+import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import { Header, Form, Button, ButtonLabel, Input } from './Searchbar.styled';
 import { HiMagnifyingGlass } from 'react-icons/hi2';
 
-class Searchbar extends Component {
-    state = {
-        query: '',
-    }
-
-    handleChange = event => {
-        this.setState({ query: event.target.value });
+const Searchbar = ({ onSubmit }) => {
+    const [query, setQuery] = useState('');
+    const handleChange = (event) => {
+        setQuery(event.target.value);
     };
 
-    handleSubmit = event => {
+    const handleSubmit = (event) => {
         event.preventDefault();
-        const { query } = this.state;
-        const { onSubmit } = this.props;
         
         if (query.trim() === "") {
             return alert("Please enter a valid query.");
         }
-        
         onSubmit(query);
     };
 
-    render() {
-        const { query } = this.state;
+    return (
+        <Header>
+            <Form onSubmit={handleSubmit}>
+                <Button type="submit">
+                    <HiMagnifyingGlass />
+                    <ButtonLabel>Search</ButtonLabel>
+                </Button>
 
-        return (
-            <Header>
-                <Form onSubmit={this.handleSubmit}>
-                    <Button type="submit">
-                        <HiMagnifyingGlass />
-                        <ButtonLabel>Search</ButtonLabel>
-                    </Button>
-
-                    <Input
-                        type="text"
-                        autoComplete="off"
-                        autoFocus
-                        placeholder="Search images and photos"
-                        value={query}
-                        onChange={this.handleChange}
-                    />
-                </Form>
-            </Header>
-        );
-    }
-}
+                <Input
+                    type="text"
+                    autoComplete="off"
+                    autoFocus
+                    placeholder="Search images and photos"
+                    value={query}
+                    onChange={handleChange}
+                />
+            </Form>
+        </Header>
+    );
+};
 
 Searchbar.propTypes = {
     onSubmit: PropTypes.func.isRequired,
