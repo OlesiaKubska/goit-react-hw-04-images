@@ -1,25 +1,21 @@
-import React, { Component } from 'react'; 
+import React from 'react'; 
 import PropTypes from 'prop-types';
 import ImageGalleryItem from 'components/ImageGalleryItem/ImageGalleryItem';
 import { StyledImageGallery } from './ImageGallery.styled';
 
-class ImageGallery extends Component {
-    render() {
-        const { images, openModal } = this.props;
-
-        return (
-            <StyledImageGallery>
-                {images.map((image) => (
-                    <ImageGalleryItem
-                        key={image.id}
-                        item={image}
-                        openModal={openModal}
-                    />
-                ))}
-            </StyledImageGallery>
-        );
-    }
-}
+const ImageGallery = ({ images, openModal }) => {
+    return (
+        <StyledImageGallery>
+            {images.map((image) => (
+                <ImageGalleryItem
+                    key={image.id}
+                    item={image}
+                    openModal={openModal}
+                />
+            ))}
+        </StyledImageGallery>
+    );
+};
 
 ImageGallery.propTypes = {
     images: PropTypes.arrayOf(
