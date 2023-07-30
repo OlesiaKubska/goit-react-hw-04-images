@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { useState, useEffect } from 'react';
 import api from 'api';
 import Searchbar from './Searchbar/Searchbar';
 import ImageGallery from './ImageGallery/ImageGallery';
@@ -10,90 +10,74 @@ import Modal from './Modal/Modal';
 
 const IMAGES_PER_PAGE = 12;
 
-export class App extends Component {
-  state = {
-    images: [],
-    currentPage: 1,
-    query: '',
-    error: null,
-    totalHits: 0,
-    isLoading: false,
-    hasLoadedAll: false,
-    isFirstLoad: true,
-    isShowModal: false,
-    modalData: {},
-  }
+export const App = () => {
+  const [images, setImages] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [query, setQuery] = useState('');
+  const [error, setError] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [hasLoadedAll, setHasLoadedAll] = useState(false);
+  const [isShowModal, setIsShowModal] = useState(false);
+  const [modalData, setModalData] = useState({});
 
-  componentDidUpdate(prevProps, prevState) {
-    if (prevState.query !== this.state.query || prevState.currentPage !== this.state.currentPage) {
-      this.fetchData();
-    }
-  }
-
-  fetchData = async () => {
-    const { query, currentPage } = this.state;
-
-    try {
-      this.setState({ isLoading: true });
-
-      const { hits, totalHits } = await api.fetchImages(query, currentPage, IMAGES_PER_PAGE);
-      
-      if (hits.length === 0) {
-        return alert("No results found.");
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setIsLoading(true);
+        const { hits, totalHits } = await api.fetchImages(query, currentPage, IMAGES_PER_PAGE);
+        
+        if (hits.length === 0) {
+          alert("No results found.");
+          setIsLoading(false);
+          return; 
+        }
+        
+        setImages((prevImages) => [...prevImages, ...hits]);
+        
+        setHasLoadedAll(currentPage >= Math.ceil(totalHits / IMAGES_PER_PAGE));
+      } catch (error) {
+        setError(error);
+      } finally {
+        setIsLoading(false);
       }
-      
-      this.setState(prev => ({
-        images: [...prev.images, ...hits],
-        hasLoadedAll: currentPage >= Math.ceil(totalHits/ IMAGES_PER_PAGE),
-      }))
-    } catch (error) {
-      this.setState({ error });
-    } finally {
-      this.setState({ isLoading: false });
+    };
+    
+    if (query !== '' || currentPage !== 1) {
+      fetchData();
     }
+  }, [query, currentPage]);
+
+  const handleSearchSubmit = (newQuery) => {
+    setQuery(newQuery);
+    setCurrentPage(1);
+    setImages([]);
   };
 
-  handleSearchSubmit = newQuery => {
-    this.setState({ query: newQuery, currentPage: 1, images: [] });
+  const handleLoadMore = () => {
+    setCurrentPage((prevCurrentPage) => prevCurrentPage + 1);
   };
 
-  handleLoadMore = () => {
-    this.setState(prevState => ({
-      currentPage: prevState.currentPage + 1,
-    }));
+  const openModal = (imageUrl, imageAlt) => {
+    setModalData ({ largeImageURL: imageUrl, alt: imageAlt });
+    setIsShowModal(true);
   };
 
-  openModal = (imageUrl, imageAlt) => {
-    const modalData = { largeImageURL: imageUrl, alt: imageAlt };
-    this.setState({ isShowModal: true, modalData });
-  };
-
-  closeModal = () => {
-    this.setState({ isShowModal: false, modalData: {} });
+  const closeModal = () => {
+    setIsShowModal(false);
+    setModalData({});
   };
   
-  render() {
-    const { images, isLoading, hasLoadedAll, isShowModal, modalData, error } = this.state;
-    const showButton = !hasLoadedAll && !isLoading && images.length > 0;
-
-    return (
-      <Container>
-        <Searchbar onSubmit={this.handleSearchSubmit} />
-
-        {isLoading && <Loader />}
-        {error && <p>Oops... Something went wrong.</p>}
-        {images.length > 0 && <ImageGallery images={images} openModal={this.openModal} />}
-
-        {showButton && (
-          <Button onClick={this.handleLoadMore}>Load More</Button>
-        )}
-
-        {isShowModal && (
-          <Modal modalData={modalData} onClose={this.closeModal} />
-        )}
-        
-        <GlobalStyle />
-      </Container>
-    );
-  }
-}
+  const showButton = !hasLoadedAll && !isLoading && images.length > 0;
+  
+  return (
+    <Container>
+      <Searchbar onSubmit={handleSearchSubmit} />
+      {isLoading && <Loader />}
+      {error && <p>Oops... Something went wrong.</p>}
+      {images.length > 0 && <ImageGallery images={images} openModal={openModal} />}
+      {showButton && <Button onClick={handleLoadMore}>Load More</Button>}
+      {isShowModal && <Modal modalData={modalData} onClose={closeModal} />}
+      <GlobalStyle />
+    </Container>
+  );
+};
