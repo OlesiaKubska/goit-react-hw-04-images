@@ -16,7 +16,7 @@ const Modal = ({ modalData, onClose }) => {
         };
     
         const handleClickOutside = (event) => {
-            if (event.target === event.currentTarget) {
+            if (!modalContainerRef.current.contains(event.target)) {
                 onClose();
             }
         };
